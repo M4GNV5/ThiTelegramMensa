@@ -1,0 +1,70 @@
+import 	puts, strcmp, strlen, sprintf;
+import HTTP from "libs/curl.ptrs";
+import json_* from "libs/json.ptrs";
+import setInterval from "libs/timeout.ptrs";
+import Telegram, MessageUpdate from "libs/telegram.ptrs";
+import CONFIG_* from "./config.ptrs";
+
+var bot = new Telegram(CONFIG_TELEGRAM_TOKEN);
+var mealData = false;
+
+const URL = "https://hiplan.thi.de/webservice/production/index.php";
+var loginBody = "service=session&method=open&format=json&username=$CONFIG_THI_USERNAME&passwd=$CONFIG_THI_PASSWORD";
+var reqHeaders = map {
+	"Content-Type": "application/x-www-form-urlencoded",
+	"User-Agent": CONFIG_USERAGENT
+};
+function refreshMeals()
+{
+	var resp = HTTP.POST(URL, loginBody, reqHeaders);
+	var data = json_decode(resp.body);
+
+	var mensaBody = "service=thiapp&method=mensa&format=json&session=${data.data[0]}";
+	json_destroy(data);
+	delete resp;
+
+	resp = HTTP.POST(URL, mensaBody, reqHeaders);
+	data = json_decode(resp.body);
+
+	if(mealData)
+		delete mealData;
+
+	var meals = data.data[0].gerichte;
+	var len = strlen(data.data[0].tag) + 3;
+	for(var i = 1; "$i" in meals; i++)
+	{
+		len += strlen(meals["$i"].name[1]) + 9;
+	}
+
+	mealData = new array{len};
+	var ptr = mealData;
+	ptr += sprintf(ptr, "*%s*\n", data.data[0].tag);
+
+	for(var i = 1; "$i" in meals; i++)
+	{
+		ptr += sprintf(ptr, "%s_%s_\n", meals["$i"].name[1], meals["$i"].name[2]);
+	}
+
+	*--ptr = 0;
+	json_destroy(data);
+	delete resp;
+}
+refreshMeals();
+var job = setInterval(refreshMeals, CONFIG_REFRESH_CYCLE);
+
+while(true)
+{
+	var msg = bot.getUpdate();
+
+	if(msg instanceof MessageUpdate)
+	{
+		if(strcmp(msg.text, "/start") == 0)
+		{
+			bot.sendMessage(msg.chat, "Welcome! Use /meal to retrieve today's dishes");
+		}
+		else if(strcmp(msg.text, "/meal") == 0)
+		{
+			bot.sendMessage(msg.chat, mealData, "Markdown");
+		}
+	}
+}

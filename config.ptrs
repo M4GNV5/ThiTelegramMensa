@@ -1,0 +1,6 @@
+const CONFIG_TELEGRAM_TOKEN = "INSERT BOT TOKEN";
+const CONFIG_REFRESH_CYCLE = 3 * 60 * 60 * 1000; //every 3 hours
+const CONFIG_THI_USERNAME = "INSERT THI USERNAME";
+const CONFIG_THI_PASSWORD = "INSERT THI PASSWORD";
+const CONFIG_USERAGENT = "ThiTelegramMensa 0.0.0 +https://github.com/M4GNV5/ThiTelegramMensa";
+;
