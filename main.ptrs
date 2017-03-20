@@ -1,4 +1,4 @@
-import 	puts, strcmp, strlen, sprintf;
+import puts, strcmp, strlen, sprintf;
 import HTTP from "libs/curl.ptrs";
 import json_* from "libs/json.ptrs";
 import setInterval from "libs/timeout.ptrs";
@@ -16,6 +16,8 @@ var reqHeaders = map {
 };
 function refreshMeals()
 {
+	puts("refreshing data...");
+
 	var resp = HTTP.POST(URL, loginBody, reqHeaders);
 	var data = json_decode(resp.body);
 
@@ -52,12 +54,14 @@ function refreshMeals()
 refreshMeals();
 var job = setInterval(refreshMeals, CONFIG_REFRESH_CYCLE);
 
-while(true)
+while(true) scoped
 {
 	var msg = bot.getUpdate();
 
 	if(msg instanceof MessageUpdate)
 	{
+		puts("${msg.sender} : ${msg.text}");
+
 		if(strcmp(msg.text, "/start") == 0)
 		{
 			bot.sendMessage(msg.chat, "Welcome! Use /meal to retrieve today's dishes");
